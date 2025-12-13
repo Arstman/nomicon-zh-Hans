@@ -72,6 +72,6 @@ impl<T> Clone for Container<T> {
 现在，类型检查器推断出，`bar_cloned: Container<T>`。
 
 [fqs]: https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#fully-qualified-syntax-for-disambiguation-calling-methods-with-the-same-name
-[method_lookup]: https://rustc-dev-guide.rust-lang.org/method-lookup.html
+[method_lookup]: https://rustc-dev-guide.rust-lang.org/hir-typeck/method-lookup.html
 [index]: https://doc.rust-lang.org/std/ops/trait.Index.html
 [clone]: https://doc.rust-lang.org/std/clone/trait.Clone.html#derivable
