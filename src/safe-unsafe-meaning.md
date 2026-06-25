@@ -29,9 +29,9 @@ Rust 标准库也有很多地方在内部使用了 Unsafe Rust。这些实现一
 
 之所以要像这样分离 Safe 和 Unsafe，归根结底在于 Safe Rust 的一个根本属性，即*可靠性*。
 
-**无论怎样，Safe Rust 都不能导致未定义行为。**
+**无论怎样，Safe Rust 的使用方都不能导致未定义行为。**
 
-Safe 与 Unsafe 分离的设计意味着 Safe Rust 和 Unsafe Rust 之间存在着不对等的信任关系。一方面， Safe Rust 本质上必须相信它所接触的任何 Unsafe Rust 都是正确编写的。另一方面，Unsafe Rust 在信任 Safe Rust 时必须非常小心。
+Safe 与 Unsafe 分离的设计意味着 Safe Rust 和 Unsafe Rust 之间存在着不对等的信任关系。一方面， Safe Rust 本质上必须相信它所接触的任何 Unsafe Rust 都是正确编写的。另一方面，Unsafe Rust 在信任 Safe Rust 时必须非常小心。它可以信任那些它作为使用方所依赖的 Safe Rust，但不能信任由它自己的使用方所选择或提供的 Safe Rust。
 
 例如，Rust 有[`PartialOrd`]和[`Ord`] trait 来区分“偏序”比较的类型和“全序”比较的类型（前者仅能进行比较而未必得出大小关系，而后者意味着每一个比较都有合理的结果）。
 
@@ -43,7 +43,9 @@ Unsafe Rust 代码不能信任 Safe Rust 代码逻辑无误。话虽如此，如
 
 区别在于范围的不同。当`BTreeMap`依赖于整数和切片时，它依赖于一个完全特定的实现。这里的风险经过评估可以与收益相权衡。在这个特定场景下，风险基本为零；如果整数和切片出了问题，*什么东西*都会出问题，因此不可能被忽视。而且，它们和`BTreeMap`是由同一批人维护的，所以很容易对它们进行监控。
 
-另一方面，`BTreeMap`的 key 类型是泛型的。信任它的`Ord`实现意味着信任过去、现在和未来的每一个`Ord`实现。这里的风险很高：总有人会犯错误，把`Ord`实现坏，甚至直接谎称提供了一个全序关系，因为“这个实现看上去够用”。对于这种情况，`BTreeMap`需要有备无患。
+跨越 crate 边界也是同样的道理。假设 crate `foo` 依赖于 crate `bar`，那么 crate `foo` 中的 Unsafe Rust 可以信任 crate `bar` 中的 Safe Rust。这是因为 crate `foo` 选择了依赖 crate `bar`，并因此信任 crate `bar` 被正确地实现了。
+
+另一方面，`BTreeMap`的 key 类型是泛型的。信任它的`Ord`实现意味着信任任意使用方的`Ord`实现。这里的风险很高：总有人会犯错误，把`Ord`实现坏，甚至直接谎称提供了一个全序关系，因为“这个实现看上去够用”。对于这种情况，`BTreeMap`需要有备无患。
 
 同样的逻辑也适用于信任一个传递给你的闭包的行为是正确的。
 
