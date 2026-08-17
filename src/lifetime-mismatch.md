@@ -64,49 +64,4 @@ fn main() {
 
 根据我们真正关心的引用语义，这个程序显然是正确的，但是生命周期系统太蠢了(原话是粗糙)，无法处理这个问题。
 
-## 不正确地缩减借用
-
-下面的代码无法编译成功，因为 Rust 发现`map`变量被借用了两次，并且不能推断出在第二次借用之前，第一次借用已经不需要了，所以保守地退回到使用整个作用域作为第一次借用的生命周期。不过不用担心，这个问题最终会得到解决：
-
-```rust,compile_fail
-# use std::collections::HashMap;
-# use std::hash::Hash;
-fn get_default<'m, K, V>(map: &'m mut HashMap<K, V>, key: K) -> &'m mut V
-where
-    K: Clone + Eq + Hash,
-    V: Default,
-{
-    match map.get_mut(&key) {
-        Some(value) => value,
-        None => {
-            map.insert(key.clone(), V::default());
-            map.get_mut(&key).unwrap()
-        }
-    }
-}
-```
-
-由于所施加的生命周期限制，`&mut map`的生命周期与其他可变的借用重叠，导致编译错误：
-
-```text
-error[E0499]: cannot borrow `*map` as mutable more than once at a time
-  --> src/main.rs:12:13
-   |
-4  |   fn get_default<'m, K, V>(map: &'m mut HashMap<K, V>, key: K) -> &'m mut V
-   |                  -- lifetime `'m` defined here
-...
-9  |       match map.get_mut(&key) {
-   |       -     --- first mutable borrow occurs here
-   |  _____|
-   | |
-10 | |         Some(value) => value,
-11 | |         None => {
-12 | |             map.insert(key.clone(), V::default());
-   | |             ^^^ second mutable borrow occurs here
-13 | |             map.get_mut(&key).unwrap()
-14 | |         }
-15 | |     }
-   | |_____- returning this value requires that `*map` is borrowed for `'m`
-```
-
 [ex2]: lifetimes.html#示例别名一个可变引用
